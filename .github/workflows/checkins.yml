@@ -1,0 +1,24 @@
+# Wakes the app every 10 minutes so dogs can send their check ins.
+# Needs two repo secrets: APP_URL (e.g. https://dog-texts.vercel.app) and CRON_SECRET (same value as in Vercel).
+name: Dog check ins
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  checkins:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Ping the check in endpoint
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "APP_URL or CRON_SECRET not set yet, skipping."
+            exit 0
+          fi
+          curl -fsS --max-time 300 -H "Authorization: Bearer $CRON_SECRET" "$APP_URL/api/checkins"
